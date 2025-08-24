@@ -2,9 +2,6 @@ import tkinter as tk
 from tkinter import ttk, filedialog
 import re, time, csv, random
 
-# ==========================================
-# Matrix Rain Background Effect
-# ==========================================
 class MatrixRain:
     def __init__(self, canvas, width, height, font=("Courier New", 12), glyphs="01"):
         self.canvas = canvas
@@ -26,9 +23,6 @@ class MatrixRain:
                 self.drops[i] = 0
             self.drops[i] += 1
 
-# ==========================================
-# Feature Extraction + Scoring
-# ==========================================
 def extract_features(url):
     return {
         "has_ip": bool(re.search(r'\d+\.\d+\.\d+\.\d+', url)),
@@ -62,75 +56,50 @@ def classify_url(url):
     else:
         return "✅ Safe Website", score, features
 
-# ==========================================
-# Logging Function
-# ==========================================
-import csv
-import time
-
 def log_result(url, verdict, score, features):
-    with open("phishing_log.csv", "a", newline="", encoding="utf-8") as file:  # ✅ added encoding
+    with open("phishing_log.csv", "a", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
         writer.writerow([time.strftime("%Y-%m-%d %H:%M:%S"), url, verdict, score, features])
 
-
-# ==========================================
-# UI Actions
-# ==========================================
 def on_check_url():
     url = url_entry.get().strip()
     if not url:
         result_label.config(text="❌ Please enter a URL!", fg="red")
         return
-
-    # Animate progress bar
     progress_bar["value"] = 0
     for i in range(0, 101, 10):
         progress_bar["value"] = i
         root.update_idletasks()
         time.sleep(0.05)
-
     verdict, score, features = classify_url(url)
     result_label.config(text=f"{verdict}\nScore: {score}/10",
                         fg=("red" if "Phishing" in verdict else "lime"))
-
     scan_console.config(state="normal")
     scan_console.insert("end", f"[SCAN] {url} → {verdict} (score={score})\n")
     scan_console.see("end")
     scan_console.config(state="disabled")
-
     report_box.config(state="normal")
     report_box.delete("1.0", "end")
     report_box.insert("end", f"Detailed Features:\n{features}")
     report_box.config(state="disabled")
-
-    # Log result
     log_result(url, verdict, score, features)
 
 def on_check_csv():
     file_path = filedialog.askopenfilename(filetypes=[("CSV Files", "*.csv")])
     if not file_path: return
-
     with open(file_path, newline="") as f:
         reader = csv.reader(f)
         urls = list(reader)
-
     for row in urls:
         if not row: continue
         url = row[0].strip()
         verdict, score, features = classify_url(url)
-
         scan_console.config(state="normal")
         scan_console.insert("end", f"[CSV] {url} → {verdict} (score={score})\n")
         scan_console.see("end")
         scan_console.config(state="disabled")
-
-        # Log result
         log_result(url, verdict, score, features)
 
-# ==========================================
-# Build GUI (with Progress Bar)
-# ==========================================
 WIDTH, HEIGHT = 980, 640
 root = tk.Tk()
 root.title("Phishing URL Detector — Hacker Terminal (Advanced)")
